@@ -17,6 +17,7 @@ from agent_framework import (
 from agent_framework.openai import OpenAIChatClient
 from pydantic import BaseModel
 
+
 @dataclass
 class ReviewRequest:
     """Structured request passed from Worker to Reviewer for evaluation."""
@@ -42,8 +43,9 @@ class AutoApprover(Executor):
         super().__init__(id=id)
 
     @handler
-    async def review(self, request: ReviewRequest, ctx: WorkflowContext[ReviewResponse]) -> None:
-
+    async def review(
+        self, request: ReviewRequest, ctx: WorkflowContext[ReviewResponse]
+    ) -> None:
         print(f"Reviewer: Reviewing requested")
         print(f"USER:{request.user_messages[-1].text}")
         print(f"AGENT:{request.agent_messages[-1].text}")
@@ -51,6 +53,7 @@ class AutoApprover(Executor):
         await ctx.send_message(
             ReviewResponse(request_id=request.request_id, feedback="OK", approved=True)
         )
+
 
 class SecondApprover(Executor):
     """Executor that reviews agent responses and provides structured feedback."""
@@ -60,8 +63,9 @@ class SecondApprover(Executor):
         self.review_count = 0
 
     @handler
-    async def review(self, request: ReviewRequest, ctx: WorkflowContext[ReviewResponse]) -> None:
-
+    async def review(
+        self, request: ReviewRequest, ctx: WorkflowContext[ReviewResponse]
+    ) -> None:
         print(f"Reviewer: Reviewing requested")
         print(f"USER:{request.user_messages[-1].text}")
         print(f"AGENT:{request.agent_messages[-1].text}")
@@ -69,14 +73,19 @@ class SecondApprover(Executor):
         # Reject the first review to demonstrate feedback incorporation.
         if self.review_count < 1:
             await ctx.send_message(
-                ReviewResponse(request_id=request.request_id, feedback="use easier words", approved=False)                
+                ReviewResponse(
+                    request_id=request.request_id,
+                    feedback="use easier words",
+                    approved=False,
+                )
             )
             self.review_count += 1
         else:
             await ctx.send_message(
-                ReviewResponse(request_id=request.request_id, feedback="OK", approved=True)
+                ReviewResponse(
+                    request_id=request.request_id, feedback="OK", approved=True
+                )
             )
-
 
 
 class Worker(Executor):
@@ -88,8 +97,9 @@ class Worker(Executor):
         self._pending_requests: dict[str, tuple[ReviewRequest, list[ChatMessage]]] = {}
 
     @handler
-    async def handle_user_messages(self, user_messages: list[ChatMessage], ctx: WorkflowContext[ReviewRequest]) -> None:
-
+    async def handle_user_messages(
+        self, user_messages: list[ChatMessage], ctx: WorkflowContext[ReviewRequest]
+    ) -> None:
         messages = [ChatMessage(role=Role.SYSTEM, text="You are a helpful assistant.")]
         messages.extend(user_messages)
 
@@ -100,7 +110,11 @@ class Worker(Executor):
         messages.extend(response.messages)
 
         # Create review request and send to Reviewer.
-        request = ReviewRequest(request_id=str(uuid4()), user_messages=user_messages, agent_messages=response.messages)
+        request = ReviewRequest(
+            request_id=str(uuid4()),
+            user_messages=user_messages,
+            agent_messages=response.messages,
+        )
         print(f"Worker: Sending response for review (ID: {request.request_id[:8]})")
         await ctx.send_message(request)
 
@@ -108,8 +122,12 @@ class Worker(Executor):
         self._pending_requests[request.request_id] = (request, messages)
 
     @handler
-    async def handle_review_response(self, review: ReviewResponse, ctx: WorkflowContext[ReviewRequest]) -> None:
-        print(f"Worker: Received review for request {review.request_id[:8]} - Approved: {review.approved}")
+    async def handle_review_response(
+        self, review: ReviewResponse, ctx: WorkflowContext[ReviewRequest]
+    ) -> None:
+        print(
+            f"Worker: Received review for request {review.request_id[:8]} - Approved: {review.approved}"
+        )
 
         if review.request_id not in self._pending_requests:
             raise ValueError(f"Unknown request ID in review: {review.request_id}")
@@ -124,7 +142,10 @@ class Worker(Executor):
 
             # Emit approved result to external consumer via AgentRunUpdateEvent.
             await ctx.add_event(
-                AgentRunUpdateEvent(self.id, data=AgentRunResponseUpdate(contents=contents, role=Role.ASSISTANT))
+                AgentRunUpdateEvent(
+                    self.id,
+                    data=AgentRunResponseUpdate(contents=contents, role=Role.ASSISTANT),
+                )
             )
             return
 
@@ -133,7 +154,10 @@ class Worker(Executor):
         # Incorporate review feedback.
         messages.append(ChatMessage(role=Role.SYSTEM, text=review.feedback))
         messages.append(
-            ChatMessage(role=Role.SYSTEM, text="Please incorporate the feedback and regenerate the response.")
+            ChatMessage(
+                role=Role.SYSTEM,
+                text="Please incorporate the feedback and regenerate the response.",
+            )
         )
         messages.extend(request.user_messages)
 
@@ -145,7 +169,9 @@ class Worker(Executor):
 
         # Send updated request for re-review.
         new_request = ReviewRequest(
-            request_id=review.request_id, user_messages=request.user_messages, agent_messages=response.messages
+            request_id=review.request_id,
+            user_messages=request.user_messages,
+            agent_messages=response.messages,
         )
         await ctx.send_message(new_request)
 
@@ -154,11 +180,10 @@ class Worker(Executor):
 
 
 async def main() -> None:
-
     # Initialize chat clients and executors.
-    mini_chat_client = OpenAIChatClient(model_id="gpt-4.1-nano")
+    chat_client = OpenAIChatClient(model_id="gpt-4.1-nano")
     reviewer = SecondApprover(id="reviewer")
-    worker = Worker(id="worker", chat_client=mini_chat_client)
+    worker = Worker(id="worker", chat_client=chat_client)
 
     agent = (
         WorkflowBuilder()
@@ -171,9 +196,7 @@ async def main() -> None:
 
     query = "write simple sonnet in 30 words, and submit for review"
 
-    async for event in agent.run_stream(
-        query
-    ):
+    async for event in agent.run_stream(query):
         print(f"Agent Response: {event}")
 
 
