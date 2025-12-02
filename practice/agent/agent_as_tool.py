@@ -1,4 +1,12 @@
-from agent_framework import BaseChatClient, ChatResponse, ChatMessage, ChatAgent
+from agent_framework import (
+    BaseChatClient,
+    ChatResponse,
+    ChatMessage,
+    ChatAgent,
+    AIFunction,
+)
+
+from pydantic import BaseModel
 
 
 class CustomChatClient(BaseChatClient):
@@ -32,7 +40,7 @@ agent = ChatAgent(
 )
 
 # Convert the agent to a tool
-custom_agent_tool = agent.as_tool()
+custom_agent_tool: AIFunction[BaseModel, str] = agent.as_tool()
 
 
 async def main():

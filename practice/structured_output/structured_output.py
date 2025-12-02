@@ -1,6 +1,5 @@
 import asyncio
 
-from agent_framework import AgentRunResponse
 from agent_framework.openai import OpenAIResponsesClient
 from pydantic import BaseModel
 
