@@ -1,23 +1,18 @@
 import asyncio
-from dataclasses import dataclass
-from uuid import uuid4
 
 from agent_framework import (
     AgentRunResponse,
     WorkflowBuilder,
-    ChatAgent,
     Executor,
-    handler,
     ChatClientProtocol,
     ChatMessage,
     WorkflowContext,
-    Role,
+    handler,
 )
 from agent_framework.openai import OpenAIChatClient
-from pydantic import BaseModel
 
 
-class NumberDoubler(Executor):
+class NumberDoubleExecutor(Executor):
     """Executor that doubles the input number."""
 
     def __init__(self, id: str, chat_client: ChatClientProtocol) -> None:
@@ -36,20 +31,15 @@ class NumberDoubler(Executor):
 
 chat_client = OpenAIChatClient(model_id="gpt-4o-mini")
 
-number_doubler = NumberDoubler(id="number_doubler", chat_client=chat_client)
-
-workflow_agent = (
-    WorkflowBuilder()
-    .set_start_executor(number_doubler)
-    .build()
-    .as_agent()  # Wrap workflow as an agent
+number_double_executor = NumberDoubleExecutor(
+    id="number_double_executor", chat_client=chat_client
 )
 
-input_number = "5"
+workflow = WorkflowBuilder().set_start_executor(number_double_executor).build()
 
 
-async def main():
-    response: AgentRunResponse = await workflow_agent.run(input_number)
+async def main(input_number: str = "5"):
+    response: AgentRunResponse = await workflow.run(input_number)
 
     print("Final Response:", response.text)
 

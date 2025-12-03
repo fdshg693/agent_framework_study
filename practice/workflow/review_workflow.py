@@ -15,7 +15,6 @@ from agent_framework import (
     handler,
 )
 from agent_framework.openai import OpenAIChatClient
-from pydantic import BaseModel
 
 
 @dataclass
