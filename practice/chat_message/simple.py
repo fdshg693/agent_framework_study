@@ -9,13 +9,13 @@ from agent_framework.openai import OpenAIChatClient
 
 async def main() -> None:
     client = OpenAIChatClient(model_id="gpt-5-nano")
-    message = [
+    messages = [
         ChatMessage(role="user", text="私の名前は太郎です。"),
         ChatMessage(role="user", text="私の名前は何ですか？"),
     ]
-    print(f"User: {message}")
-    print("Assistant: ", end="")
-    response: ChatResponse = await client.get_response(message)
+    for msg in messages:
+        print(f"User: {msg.text}")
+    response: ChatResponse = await client.get_response(messages)
     print(response)
 
 
