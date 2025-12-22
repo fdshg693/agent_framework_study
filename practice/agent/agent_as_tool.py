@@ -4,6 +4,7 @@ from agent_framework import (
     ChatMessage,
     ChatAgent,
     AIFunction,
+    ChatResponseUpdate,
 )
 
 from pydantic import BaseModel
@@ -11,16 +12,14 @@ from pydantic import BaseModel
 
 class CustomChatClient(BaseChatClient):
     async def _inner_get_response(self, *, messages, chat_options, **kwargs):
-        # Your custom implementation
+        # as_toolでstream_callbackが指定されなかった場合に呼ばれます
         return ChatResponse(
             messages=[ChatMessage(role="assistant", text="2")],
             response_id="custom-response",
         )
 
     async def _inner_get_streaming_response(self, *, messages, chat_options, **kwargs):
-        # Your custom streaming implementation
-        from agent_framework import ChatResponseUpdate
-
+        # as_toolの際に、stream_callbackが指定された場合に呼ばれます
         yield ChatResponseUpdate(
             role="assistant", contents=[{"type": "text", "text": "2"}]
         )
@@ -40,7 +39,10 @@ agent = ChatAgent(
 )
 
 # Convert the agent to a tool
-custom_agent_tool: AIFunction[BaseModel, str] = agent.as_tool()
+custom_agent_tool: AIFunction[BaseModel, str] = agent.as_tool(
+    # stream_callbackでコールバックを指定すると、ストリーミングモードで動作します
+    stream_callback=None,
+)
 
 
 async def main():

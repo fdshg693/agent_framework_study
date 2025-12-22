@@ -1,70 +1,39 @@
 """
-BaseChatClientクラスを継承した、カスタムチャットクライアントからエージェント作成して、レスポンスを取得する例
+BaseAgentを継承してカスタムエージェントを作成するサンプルコードです。
 """
 
-from typing import AsyncIterable
 from agent_framework import (
-    BaseChatClient,
-    ChatResponse,
-    ChatResponseUpdate,
     ChatMessage,
-)
-import asyncio
-
-### ============== CustomChatClientの実装 ============== ###
-
-
-class CustomChatClient(BaseChatClient):
-    """
-    BaseChatClientの継承のために、abstractメソッド_inner_get_responseと_inner_get_streaming_responseメソッドを実装する必要があります。
-    この2つのメソッドを実装すると、get_responseおよびget_streaming_responseメソッドが利用可能になります。
-    """
-
-    async def _inner_get_response(
-        self, *, messages, chat_options, **kwargs
-    ) -> ChatResponse:
-        """
-        どんなプロンプトが来ても、常に"2"と返すカスタム実装の例
-        """
-        return ChatResponse(
-            messages=[ChatMessage(role="assistant", text="2")],
-            response_id="custom-response",
-        )
-
-    async def _inner_get_streaming_response(
-        self, *, messages, chat_options, **kwargs
-    ) -> AsyncIterable[ChatResponseUpdate]:
-        """
-        どんなプロンプトが来ても、常に"2"・"And that is 1+1."と順番に返すカスタム実装の例
-        """
-        from agent_framework import ChatResponseUpdate
-
-        yield ChatResponseUpdate(
-            role="assistant", contents=[{"type": "text", "text": "2"}]
-        )
-        print("Simulating delay before sending the next chunk...")
-        await asyncio.sleep(5)  # Simulate some delay
-        yield ChatResponseUpdate(
-            role="assistant", contents=[{"type": "text", "text": "And that is 1+1."}]
-        )
-
-
-# Create a client
-client = CustomChatClient(model_id="gpt-4")
-
-# Create an agent using the convenience method
-agent = client.create_agent(
-    name="assistant", instructions="custom instructions", temperature=0.7
+    BaseAgent,
+    AgentRunResponse,
+    AgentRunResponseUpdate,
 )
 
 
-async def get_custom_response():
-    # Run the agent
-    response = await agent.run("Hello!")
-    print(response)
+class SimpleAgent(BaseAgent):
+    async def run(self, messages=None, *, thread=None, **kwargs):
+        # Custom implementation
+        msg = ChatMessage(role="assistant", text="This is a simple agent.")
+        return AgentRunResponse(messages=[msg], response_id="simple-response")
+
+    def run_stream(self, messages=None, *, thread=None, **kwargs):
+        async def _stream():
+            # Custom streaming implementation
+            yield AgentRunResponseUpdate()
+
+        return _stream()
+
+
+async def run_simple_agent_example():
+    # Create a simple agent
+    agent = SimpleAgent(name="my-agent", description="A simple agent implementation")
+
+    # Run the simple agent with a message
+    response = await agent.run("Hello, simple agent!")
+    print(response.text)
 
 
 if __name__ == "__main__":
     import asyncio
 
-    asyncio.run(get_custom_response())
+    asyncio.run(run_simple_agent_example())

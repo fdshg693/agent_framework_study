@@ -1,3 +1,8 @@
+"""
+明示的にAI用の関数を作成するサンプルコードです。
+実際はこのような形をとらずとも、普通の関数をAIに渡すだけでAI用関数として扱うことができます。
+"""
+
 from typing import Annotated
 from pydantic import BaseModel, Field
 from agent_framework import AIFunction, ai_function

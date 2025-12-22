@@ -1,4 +1,6 @@
-import asyncio
+"""
+エージェントミドルウェアを使用するサンプルコードです。
+"""
 
 from agent_framework import ChatMessage, ChatAgent, AgentMiddleware, AgentRunContext
 from agent_framework.openai import OpenAIResponsesClient
@@ -29,4 +31,6 @@ async def middleware_example():
 
 
 if __name__ == "__main__":
+    import asyncio
+
     asyncio.run(middleware_example())

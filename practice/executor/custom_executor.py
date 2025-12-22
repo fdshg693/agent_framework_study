@@ -1,27 +1,34 @@
+"""
+カスタムエグゼキュータのサンプルコードです。
+"""
+
 import asyncio
 
 from agent_framework import (
     handler,
     Executor,
-    ChatClientProtocol,
     WorkflowContext,
     SharedState,
     InProcRunnerContext,
 )
-from agent_framework.openai import OpenAIChatClient
 
 
 class NumberDoubleExecutor(Executor):
-    """Executor that doubles the input number."""
+    """
+    数字を受け取り、その数字を2倍にして返すエグゼキュータのサンプルコードです。
+    """
 
-    def __init__(self, id: str, chat_client: ChatClientProtocol) -> None:
+    def __init__(self, id: str) -> None:
         super().__init__(id=id)
-        self._chat_client = chat_client
 
     @handler
     async def handle_user_messages(
         self, user_messages: str, ctx: WorkflowContext[str]
     ) -> None:
+        """
+        user_messagesで受け取った数字を2倍にして返します。
+        返すために、contextのsend_messageを使用しています。
+        """
         input_number = int(user_messages[-1])
 
         doubled_number = input_number * 2
@@ -30,11 +37,7 @@ class NumberDoubleExecutor(Executor):
         return
 
 
-chat_client = OpenAIChatClient(model_id="gpt-4o-mini")
-
-number_double_executor = NumberDoubleExecutor(
-    id="number_double_executor", chat_client=chat_client
-)
+number_double_executor = NumberDoubleExecutor(id="number_double_executor")
 
 
 async def main():
