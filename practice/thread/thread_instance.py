@@ -1,3 +1,7 @@
+"""
+AgentThreadインスタンスに直接メッセージを追加する例
+"""
+
 from agent_framework import AgentThread, ChatMessage
 from agent_framework.openai import OpenAIResponsesClient
 

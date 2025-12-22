@@ -1,3 +1,7 @@
+"""
+スレッドを使ってコンテキストを保持するエージェントの例
+"""
+
 from agent_framework import AgentThread
 from agent_framework.openai import OpenAIResponsesClient
 

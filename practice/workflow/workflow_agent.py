@@ -1,48 +1,55 @@
-import asyncio
+"""
+カスタムエグゼキュータを使用したワークフローエージェントの例
+"""
 
 from agent_framework import (
     AgentRunResponse,
+    Workflow,
     WorkflowBuilder,
     Executor,
-    ChatClientProtocol,
-    ChatMessage,
     WorkflowContext,
     handler,
 )
-from agent_framework.openai import OpenAIChatClient
 
 
 class NumberDoubleExecutor(Executor):
-    """Executor that doubles the input number."""
+    """
+    数字を受け取り、その数字を2倍にして返すエグゼキュータのサンプルコードです。
+    """
 
-    def __init__(self, id: str, chat_client: ChatClientProtocol) -> None:
+    def __init__(self, id: str) -> None:
         super().__init__(id=id)
-        self._chat_client = chat_client
 
     @handler
     async def handle_user_messages(
-        self, user_messages: list[ChatMessage], ctx: WorkflowContext[int]
+        self, user_messages: str, ctx: WorkflowContext[str]
     ) -> None:
-        input_number = int(user_messages[-1].text)
+        """
+        user_messagesで受け取った数字を2倍にして返します。
+        返すために、contextのsend_messageを使用しています。
+        """
+        input_number = int(user_messages[-1])
 
-        print(input_number * 2)
+        doubled_number = input_number * 2
+        print(f"Doubled number: {doubled_number}")
+        await ctx.send_message(str(doubled_number))
         return
 
 
-chat_client = OpenAIChatClient(model_id="gpt-4o-mini")
+number_double_executor: Executor = NumberDoubleExecutor(id="number_double_executor")
 
-number_double_executor = NumberDoubleExecutor(
-    id="number_double_executor", chat_client=chat_client
+workflow: Workflow = (
+    WorkflowBuilder().set_start_executor(number_double_executor).build()
 )
 
-workflow = WorkflowBuilder().set_start_executor(number_double_executor).build()
 
-
-async def main(input_number: str = "5"):
-    response: AgentRunResponse = await workflow.run(input_number)
+async def main():
+    response: AgentRunResponse = await workflow.run(message="5")
 
     print("Final Response:", response.text)
 
 
 if __name__ == "__main__":
+    import asyncio
+
     asyncio.run(main())

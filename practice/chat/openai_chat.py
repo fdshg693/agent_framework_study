@@ -6,7 +6,7 @@ from agent_framework.openai import OpenAIChatClient
 
 
 async def main() -> None:
-    client = OpenAIChatClient()
+    client = OpenAIChatClient(model_id="gpt-5-nano")
     message = "1+2"
     print(f"User: {message}")
     print("Assistant: ", end="")
