@@ -6,6 +6,8 @@ from agent_framework.azure import AzureOpenAIChatClient
 
 
 async def main() -> None:
+    # env_file_pathの内容の読み込みはPydanticが裏側で使われている
+    # 詳細は zenn/docs/SettingsConfigDict.md を参照
     client = AzureOpenAIChatClient(env_file_path=".env")
     message = "1+1=?"
     print(f"User: {message}")
